@@ -182,6 +182,7 @@ namespace hpx {
 #else    // DOXYGEN
 
 #include <hpx/config.hpp>
+#include <hpx/iterator_support/counting_iterator.hpp>
 #include <hpx/modules/concepts.hpp>
 #include <hpx/modules/executors.hpp>
 #include <hpx/modules/iterator_support.hpp>
@@ -239,26 +240,51 @@ namespace hpx::parallel {
             static decltype(auto) parallel(
                 ExPolicy&& policy, BidirIter first, Sent last)
             {
-                using destination_iterator = std::reverse_iterator<BidirIter>;
-                using zip_iterator =
-                    hpx::util::zip_iterator<BidirIter, destination_iterator>;
-                using reference = typename zip_iterator::reference;
-
                 auto last2 = first;
-                auto size = detail::advance_and_get_distance(last2, last);
+                auto const size = detail::advance_and_get_distance(last2, last);
 
-                return util::detail::convert_to_result(
-                    for_each_n<zip_iterator>().call(
-                        HPX_FORWARD(ExPolicy, policy),
-                        hpx::util::zip_iterator(
-                            first, destination_iterator(last2)),
-                        size / 2,
-                        [](reference t) -> void {
-                            using hpx::get;
-                            std::swap(get<0>(t), get<1>(t));
-                        },
-                        hpx::identity_v),
-                    [last2](auto) -> BidirIter { return last2; });
+                if constexpr (hpx::traits::is_random_access_iterator_v<
+                                  BidirIter>)
+                {
+                    return util::detail::convert_to_result(
+                        for_each_n<hpx::util::counting_iterator<std::size_t>>()
+                            .call(
+                                HPX_FORWARD(ExPolicy, policy),
+                                hpx::util::make_counting_iterator<std::size_t>(
+                                    0),
+                                size / 2,
+                                [first, last2](std::size_t i) -> void {
+#if defined(HPX_HAVE_CXX20_STD_RANGES_ITER_SWAP)
+                                    std::ranges::iter_swap(
+                                        first + i, last2 - 1 - i);
+#else
+                                    std::iter_swap(first + i, last2 - 1 - i);
+#endif
+                                },
+                                hpx::identity_v),
+                        [last2](auto) -> BidirIter { return last2; });
+                }
+                else
+                {
+                    using destination_iterator =
+                        std::reverse_iterator<BidirIter>;
+                    using zip_iterator = hpx::util::zip_iterator<BidirIter,
+                        destination_iterator>;
+                    using reference = typename zip_iterator::reference;
+
+                    return util::detail::convert_to_result(
+                        for_each_n<zip_iterator>().call(
+                            HPX_FORWARD(ExPolicy, policy),
+                            hpx::util::zip_iterator(
+                                first, destination_iterator(last2)),
+                            size / 2,
+                            [](reference t) -> void {
+                                using hpx::get;
+                                std::swap(get<0>(t), get<1>(t));
+                            },
+                            hpx::identity_v),
+                        [last2](auto) -> BidirIter { return last2; });
+                }
             }
         };
         /// \endcond
