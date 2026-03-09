@@ -270,6 +270,7 @@ namespace hpx::agas {
     parcelset::endpoints_type const& addressing_service::resolve_locality(
         naming::gid_type const& gid, error_code& ec)
     {
+        static parcelset::endpoints_type const empty_endpoints;
         resolved_localities_type::iterator it;
         {
             std::shared_lock<hpx::shared_mutex> l(resolved_localities_mtx_);
@@ -290,11 +291,9 @@ namespace hpx::agas {
                 std::string const str = hpx::util::format(
                     "couldn't resolve the given target locality ({})", gid);
 
-                l.unlock();
-
                 HPX_THROWS_IF(ec, hpx::error::bad_parameter,
                     "addressing_service::resolve_locality", str);
-                return resolved_localities_[naming::invalid_gid];
+                return empty_endpoints;
             }
         }
 
@@ -306,13 +305,11 @@ namespace hpx::agas {
             if (HPX_UNLIKELY(!util::insert_checked(
                     resolved_localities_.emplace(gid, endpoints), it)))
             {
-                l.unlock();
-
                 HPX_THROWS_IF(ec, hpx::error::internal_server_error,
                     "addressing_service::resolve_locality",
                     "resolved locality insertion failed "
                     "due to a locking error or memory corruption");
-                return resolved_localities_[naming::invalid_gid];
+                return empty_endpoints;
             }
         }
         else if (it->second.empty() && !endpoints.empty())

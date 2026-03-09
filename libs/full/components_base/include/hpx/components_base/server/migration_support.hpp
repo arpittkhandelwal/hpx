@@ -134,7 +134,7 @@ namespace hpx::components {
         }
 
         // Pinning functionality
-        void pin() noexcept
+        bool pin() noexcept
         {
             intrusive_ptr_add_ref(data_.get());    // keep alive
 
@@ -149,7 +149,11 @@ namespace hpx::components {
                     data_->pin_count_ != 0 ||
                         (!started_migration_ && !was_marked_for_migration_));
                 ++data_->pin_count_;
+                return true;
             }
+
+            intrusive_ptr_release(data_.get());    // release keep alive
+            return false;
         }
 
         bool unpin()

@@ -36,8 +36,14 @@ namespace hpx::components {
 
             virtual ~pinned_ptr_base() = default;
 
+            constexpr bool pinned() const noexcept
+            {
+                return pinned_;
+            }
+
         protected:
             naming::address_type lva_ = nullptr;
+            bool pinned_ = false;
         };
 
         template <typename Component>
@@ -50,7 +56,7 @@ namespace hpx::components {
                 HPX_ASSERT(nullptr != this->lva_);
 
                 // pin associated component instance
-                traits::component_pin_support<Component>::pin(
+                this->pinned_ = traits::component_pin_support<Component>::pin(
                     get_lva<Component>::call(this->lva_));
             }
 
@@ -62,8 +68,11 @@ namespace hpx::components {
             ~pinned_ptr() override
             {
                 // unpin associated component instance
-                traits::component_pin_support<Component>::unpin(
-                    get_lva<Component>::call(this->lva_));
+                if (this->pinned_)
+                {
+                    traits::component_pin_support<Component>::unpin(
+                        get_lva<Component>::call(this->lva_));
+                }
             }
         };
     }    // namespace detail
@@ -102,6 +111,7 @@ namespace hpx::components {
         {
             if (this != &rhs)
             {
+                delete data_;
                 data_ = rhs.data_;
                 rhs.data_ = nullptr;
             }
@@ -110,7 +120,7 @@ namespace hpx::components {
 
         explicit constexpr operator bool() const noexcept
         {
-            return data_ != nullptr;
+            return data_ != nullptr && data_->pinned();
         }
 
         template <typename Component>
