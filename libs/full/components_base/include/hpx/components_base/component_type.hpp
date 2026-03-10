@@ -175,7 +175,7 @@ namespace hpx::components {
     {
         if (t == to_int(component_enum_type::invalid))
             return to_int(component_enum_type::invalid);
-        return static_cast<component_type>(t & component_type_mask);
+        return static_cast<component_type>(t & 0x3FF);
     }
 
     /// The upper short word of the component is the actual component type
@@ -183,8 +183,7 @@ namespace hpx::components {
     {
         if (t == to_int(component_enum_type::invalid))
             return to_int(component_enum_type::invalid);
-        return static_cast<component_type>(
-            (t >> component_type_shift) & component_type_mask);
+        return static_cast<component_type>((t >> 10) & 0x3FF);
     }
 
     /// A component derived from a base component exposing the actions needs to
@@ -192,8 +191,7 @@ namespace hpx::components {
     constexpr component_type derived_component_type(
         component_type derived, component_type base) noexcept
     {
-        return static_cast<component_type>(
-            derived << component_type_shift | base);
+        return static_cast<component_type>(derived << 10 | base);
     }
 
     /// \brief Verify the two given component types are matching (compatible)
