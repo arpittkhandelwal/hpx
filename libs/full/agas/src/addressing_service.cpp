@@ -291,6 +291,8 @@ namespace hpx::agas {
                 std::string const str = hpx::util::format(
                     "couldn't resolve the given target locality ({})", gid);
 
+                l.unlock();
+
                 HPX_THROWS_IF(ec, hpx::error::bad_parameter,
                     "addressing_service::resolve_locality", str);
                 return empty_endpoints;
@@ -305,6 +307,8 @@ namespace hpx::agas {
             if (HPX_UNLIKELY(!util::insert_checked(
                     resolved_localities_.emplace(gid, endpoints), it)))
             {
+                l.unlock();
+
                 HPX_THROWS_IF(ec, hpx::error::internal_server_error,
                     "addressing_service::resolve_locality",
                     "resolved locality insertion failed "
