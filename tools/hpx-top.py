@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#
 # Copyright (c) 2026 Arpit Khandelwal
 #
 # SPDX-License-Identifier: BSL-1.0
