@@ -70,19 +70,25 @@ int hpx_main()
     }
 
     // -----------------------------------------------------------------------
-    // Test 2: split with thread_pool_scheduler via pipeline syntax.
+    // Test 2: split with a custom scheduler using a scheduler-aware sender.
     //
-    // The pipeline  `sched | ex::split(just(100))`  triggers
-    // tag_override_invoke which reads get_completion_scheduler<set_value_t>
-    // from the sender, and routes to our new generic-scheduler tag_invoke on
-    // split_t.  Late-arriving subscribers must get their completion on the
-    // thread pool, not inline on this thread.
+    // This test uses `ex::split(ex::transfer(ex::just(100), sched))`.
+    // `ex::transfer` attaches `sched` as the completion scheduler of the
+    // predecessor sender, and `ex::split` must preserve that scheduler when a
+    // late subscriber connects after the predecessor has already completed.
+    // Late-arriving subscribers must get their completion on the custom scheduler,
+    // not inline on this thread.
     // -----------------------------------------------------------------------
     {
-        ex::thread_pool_scheduler sched{};
+        std::atomic<bool> schedule_called{false};
+        std::atomic<bool> execute_called{false};
+        std::atomic<bool> tag_invoke_overload_called{false};
+        example_scheduler sched{
+            schedule_called, execute_called, tag_invoke_overload_called};
 
-        // just(100) | transfer(sched) gives a sender whose completion
-        // scheduler is sched, so split picks up the scheduler automatically.
+        // `ex::transfer(ex::just(100), sched)` gives a sender whose completion
+        // scheduler is `sched`, so `ex::split` picks up the scheduler
+        // automatically.
         auto shared_s = ex::split(ex::transfer(ex::just(100), sched));
 
         std::atomic<int> call_count{0};
@@ -94,14 +100,17 @@ int hpx_main()
         }));
         HPX_TEST_EQ(call_count.load(), 1);
 
+        schedule_called = false;
+
         // Second subscriber — predecessor_done is now true.
         // Before the fix: fires inline on THIS thread.
-        // After the fix: dispatched through thread_pool_scheduler.
+        // After the fix: dispatched through the custom scheduler.
         tt::sync_wait(ex::then(shared_s, [&](int v) {
             HPX_TEST_EQ(v, 100);
             ++call_count;
         }));
         HPX_TEST_EQ(call_count.load(), 2);
+        HPX_TEST(schedule_called.load());
     }
 
     // -----------------------------------------------------------------------

@@ -517,7 +517,7 @@ namespace hpx::execution::experimental {
                     friend void tag_invoke(
                         set_stopped_t, schedule_receiver&& r) noexcept
                     {
-                        r.holder.reset();
+                        auto h = HPX_MOVE(r.holder);
                     }
 
                     friend empty_env tag_invoke(
