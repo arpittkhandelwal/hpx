@@ -530,8 +530,8 @@ namespace hpx::execution::experimental {
                 using schedule_sender_type = hpx::util::invoke_result_t<
                     hpx::execution::experimental::schedule_t,
                     std::decay_t<Sched>&>;
-                using op_state_type = connect_result_t<schedule_sender_type,
-                    schedule_receiver>;
+                using op_state_type =
+                    connect_result_t<schedule_sender_type, schedule_receiver>;
 
                 struct schedule_op_holder
                 {
@@ -568,8 +568,8 @@ namespace hpx::execution::experimental {
                         {
                             std::atomic_thread_fence(std::memory_order_acquire);
                             holder_alloc_type a(p->alloc);
-                            std::allocator_traits<
-                                holder_alloc_type>::destroy(a, p);
+                            std::allocator_traits<holder_alloc_type>::destroy(
+                                a, p);
                             std::allocator_traits<
                                 holder_alloc_type>::deallocate(a, p, 1);
                         }
@@ -649,8 +649,7 @@ namespace hpx::execution::experimental {
             }
 
             template <typename Sender_, typename Sched_,
-                std::enable_if_t<
-                    is_scheduler_v<std::decay_t<Sched_>> &&
+                std::enable_if_t<is_scheduler_v<std::decay_t<Sched_>> &&
                         !std::is_same_v<std::decay_t<Sched_>,
                             run_loop_scheduler>,
                     int> = 0>
