@@ -301,7 +301,8 @@ namespace hpx::execution::experimental {
 
     // Type-alias variant (kept for existing call sites).  Backed by the internal
     // (non-deprecated) stdexec::__transform_completion_signatures_t helper.
-    template <class Sigs, class MoreSigs = stdexec::completion_signatures<>,
+    HPX_CXX_CORE_EXPORT template <class Sigs,
+        class MoreSigs = stdexec::completion_signatures<>,
         template <class...> class ValueTransform =
             stdexec::__cmplsigs::__default_set_value,
         template <class...> class ErrorTransform =
@@ -314,7 +315,7 @@ namespace hpx::execution::experimental {
 
     // Type-alias variant for the "of_t" variant (sender + env convenience form).
     // Backed by stdexec::__transform_completion_signatures_of_t (non-deprecated).
-    template <class Sndr, class Env = stdexec::env<>,
+    HPX_CXX_CORE_EXPORT template <class Sndr, class Env = stdexec::env<>,
         class MoreSigs = stdexec::completion_signatures<>,
         template <class...> class ValueTransform =
             stdexec::__cmplsigs::__default_set_value,
