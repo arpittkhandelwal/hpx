@@ -73,9 +73,7 @@ namespace hpx::mpi::experimental {
         HPX_CXX_CORE_EXPORT template <typename R, typename F>
         struct transform_mpi_receiver
         {
-#if defined(HPX_HAVE_STDEXEC)
-            using is_receiver = void;
-#endif
+            using receiver_concept = hpx::execution::experimental::receiver_t;
             HPX_NO_UNIQUE_ADDRESS std::decay_t<R> r;
             HPX_NO_UNIQUE_ADDRESS std::decay_t<F> f;
 

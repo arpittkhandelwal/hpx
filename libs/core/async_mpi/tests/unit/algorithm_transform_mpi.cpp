@@ -252,9 +252,10 @@ int hpx_main()
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
-#if !defined(HPX_HAVE_STDEXEC)
-    // Disable MPI tests because they
-    // hang due to sync_wait consuming the thread
+    // Note: Previously disabled under stdexec because sync_wait would hang by
+    // consuming the calling thread.  This is no longer the case with the modern
+    // stdexec run_loop-based sync_wait implementation, so the guard has been
+    // removed.
     MPI_Init(&argc, &argv);
 
     auto result = hpx::local::init(hpx_main, argc, argv);
@@ -262,5 +263,4 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     MPI_Finalize();
 
     return result || hpx::util::report_errors();
-#endif
 }
